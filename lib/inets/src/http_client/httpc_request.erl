@@ -249,7 +249,7 @@ headers(Headers, _) ->
 http_headers([], Headers) ->
     lists:flatten(Headers);
 http_headers([{Key,Value} | Rest], Headers) ->
-    Header = Key ++ ": " ++ Value ++ ?CRLF,
+    Header = http_util:to_titlecase(Key) ++ ": " ++ Value ++ ?CRLF,
     http_headers(Rest, [Header | Headers]).
 
 handle_proxy(_, Headers) when is_list(Headers) ->

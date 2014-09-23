@@ -271,10 +271,10 @@ key_value_str(Key = 'last-modified', Headers) ->
 key_value_str(_, undefined) ->
     undefined;
 key_value_str(Key, Value)  ->
-    Key ++ ": " ++ Value ++ ?CRLF.
+    http_util:to_titlecase(Key) ++ ": " ++ Value ++ ?CRLF.
 
 headers_other([], Headers) ->
     Headers;
 headers_other([{Key,Value} | Rest], Headers) ->
-    Header = Key ++ ": " ++ Value ++ ?CRLF,
+    Header = http_util:to_titlecase(Key) ++ ": " ++ Value ++ ?CRLF,
     headers_other(Rest, [Header | Headers]).
