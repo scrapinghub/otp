@@ -1210,10 +1210,6 @@ header_record([{Key, Val} | Rest], RequestHeaders, Host, Version) ->
 				   RequestHeaders#http_request_h.other]}, 
 		  Host, Version).
 
-validate_headers(RequestHeaders = #http_request_h{te = undefined}, Host, 
-		 "HTTP/1.1" = Version) ->
-    validate_headers(RequestHeaders#http_request_h{te = ""}, Host, 
-		     "HTTP/1.1" = Version);
 validate_headers(RequestHeaders = #http_request_h{host = undefined}, 
 		 Host, "HTTP/1.1" = Version) ->
     validate_headers(RequestHeaders#http_request_h{host = Host}, Host, Version);
