@@ -315,14 +315,9 @@ handle_call(#request{address = Addr} = Request, _,
 								      timers = NewTimers}),
                     {reply, ok, State}
             end;
-		{error, Reason}
-          when (Reason =:= closed) orelse
-               (Reason =:= econnaborted)  ->
-		    ?hcri("failed sending request", [{reason, Reason}]),
-            {stop, normal, {pipeline_failed, Reason}, State0};
-        {error, OtherReason} ->
-            ?hcri("failed sending request", [{reason, OtherReason}]),
-            {reply, {pipeline_failed, OtherReason}, State0}
+        {error, Reason} ->
+            ?hcri("failed sending request", [{reason, Reason}]),
+            {reply, {pipeline_failed, Reason}, State0}
     end;
 
 handle_call(#request{address = Addr} = Request, _, 
@@ -360,30 +355,25 @@ handle_call(#request{address = Addr} = Request, _,
 	    ?hcrd("no current request", []),
 	    cancel_timer(Timers#timers.queue_timer,
 			 timeout_queue),
-        NewTimers = Timers#timers{queue_timer = undefined},
-        State1 = State0#state{timers = NewTimers},
 	    Address = handle_proxy(Addr, Proxy),
 	    case httpc_request:send(Address, Session, Request) of
 		ok ->
 		    ?hcrd("request sent", []),
 
 		    %% Activate the request time out for the new request
-		    State2 =
-			activate_request_timeout(State1#state{request = Request}),
+		    State1 =
+			activate_request_timeout(State0#state{request = Request}),
+		    NewTimers = State1#state.timers,
 		    NewSession =
 			Session#session{queue_length = 1,
 					client_close = ClientClose},
 		    insert_session(NewSession, ProfileName),
-		    State = init_wait_for_response_state(Request, State2#state{session = NewSession}),
+		    State = init_wait_for_response_state(Request, State1#state{session = NewSession,
+								      timers = NewTimers}),
 		    {reply, ok, State};
-		{error, Reason}
-          when (Reason =:= closed) orelse
-               (Reason =:= econnaborted)  ->
+		{error, Reason} ->
 		    ?hcri("failed sending request", [{reason, Reason}]),
-            {stop, normal, {request_failed, Reason}, State1};
-		{error, OtherReason} ->
-		    ?hcri("failed sending request", [{reason, OtherReason}]),
-		    {reply, {request_failed, OtherReason}, State1}
+		    {reply, {request_failed, Reason}, State0}
 	    end
     end;
 
