@@ -1332,7 +1332,7 @@ handle_keep_alive_queue(#state{status       = keep_alive,
 					     Session, <<>>,
 					     State#state{keep_alive = KeepAlive});
 			{error, Reason} ->
-			    {stop, shutdown, {keepalive_failed, Reason}, State}
+			    {stop, {shutdown, {keepalive_failed, Reason}}, State}
 		    end
 	    end
     end.
