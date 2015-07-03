@@ -428,7 +428,7 @@ handle_cast({cancel, RequestId},
                      {curr_req_id, undefined},
                      {profile, ProfileName},
                      {canceled,   Canceled}]),
-    {noreply, State#state{canceled = [RequestId | Canceled]}};
+    {noreply, State};
 
 
 handle_cast(stream_next, #state{session = Session} = State) ->
