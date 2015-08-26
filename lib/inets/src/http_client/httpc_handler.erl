@@ -1814,10 +1814,12 @@ host_header(_, URI) ->
 tls_upgrade(#state{status = 
 		       {ssl_tunnel, 
 			#request{settings = 
-				     #http_options{ssl = {_, TLSOptions} = SocketType},
-				     address = Address} = Request},
+				     #http_options{ssl = {_, TLSOptions0} = SocketType},
+				     address = {Host, _} = Address} = Request},
 		   session = #session{socket = TCPSocket} = Session0,
 		   options = Options} = State) ->
+
+    TLSOptions = [{server_name_indication, Host} | TLSOptions0],
 
     case ssl:connect(TCPSocket, TLSOptions) of
 	{ok, TLSSocket} ->
