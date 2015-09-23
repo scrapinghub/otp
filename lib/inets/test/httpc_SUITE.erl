@@ -98,6 +98,7 @@ only_simulated() ->
      stream_once,
      stream_single_chunk,
      stream_no_length,
+     not_streamed_once,
      stream_large_not_200_or_206,
      no_content_204,
      tolerate_missing_CR,
@@ -415,7 +416,15 @@ stream_large_not_200_or_206() ->
       "other than 200 or 206" }].
 stream_large_not_200_or_206(Config) when is_list(Config) ->
     Request = {url(group_name(Config), "/large_404_response.html", Config), []},
-    {{_,404,_}, _, _} = non_streamed_async_test(Request, {stream, self}).
+    {404, _} = not_streamed_test(Request, {stream, self}).
+%%-------------------------------------------------------------------------
+not_streamed_once() ->
+    [{doc, "Test not streamed responses with once streaming"}].
+not_streamed_once(Config) when is_list(Config) ->
+    Request0 = {url(group_name(Config), "/404.html", Config), []},
+    {404, _} = not_streamed_test(Request0, {stream, {self, once}}),
+    Request1 = {url(group_name(Config), "/404_chunked.html", Config), []},
+    {404, _} = not_streamed_test(Request1, {stream, {self, once}}).
 
 
 %%-------------------------------------------------------------------------
@@ -1125,18 +1134,18 @@ stream_test(Request, To) ->
 
     Body = binary_to_list(StreamedBody).
 
-non_streamed_async_test(Request, To) ->
-    {ok, Response} =
+not_streamed_test(Request, To) ->
+    {ok, {{_,Code,_}, [_ | _], Body}} =
 	httpc:request(get, Request, [], [{body_format, binary}]),
     {ok, RequestId} =
-	httpc:request(get, Request, [], [{sync, false}, To]),
+	httpc:request(get, Request, [], [{body_format, binary}, {sync, false}, To]),
 
-	receive
-	    {http, {RequestId, Response}} ->
-        Response;
-	    {http, Msg} ->
-		ct:fail(Msg)
-	end.
+    receive
+	{http, {RequestId, {{_, Code, _}, _Headers, Body}}} ->
+	    {Code, binary_to_list(Body)};
+	{http, Msg} ->
+	    ct:fail(Msg)
+    end.
 
 url(http, End, Config) ->
     Port = ?config(port, Config),
