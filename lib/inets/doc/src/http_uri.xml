@@ -111,6 +111,16 @@ query()     = string()
 	a scheme not found in the scheme defaults) a port number must be 
 	provided or else the parsing will fail. </p>
 
+
+        <p>Scheme validation fun is to be defined as follows:
+
+	    <code>
+fun(SchemeStr :: string()) ->
+	valid |	{error, Reason :: term()}.
+	    </code>
+
+        It is called before scheme string gets converted into scheme atom and
+        thus possible atom leak could be prevented</p>
         <marker id="encode"></marker>
       </desc>
     </func>
