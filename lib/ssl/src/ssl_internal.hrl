@@ -75,6 +75,7 @@
 -record(ssl_options, {
 	  protocol    :: tls | dtls,
 	  versions    :: ['tlsv1.2' | 'tlsv1.1' | tlsv1 | sslv3] | ['dtlsv1.2' | dtlsv1],
+	  record_layer_version :: undefined | 'tlsv1.2' | 'tlsv1.1' | tlsv1 | sslv3,
 	  verify      :: verify_none | verify_peer,
 	  verify_fun,  %%:: fun(CertVerifyErrors::term()) -> boolean(),
 	  fail_if_no_peer_cert ::  boolean(),
