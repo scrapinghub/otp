@@ -1469,7 +1469,7 @@ dummy_ssl_server_hang_loop(_) ->
 
 ensure_host_header_with_port([]) ->
     false;
-ensure_host_header_with_port(["host: " ++ Host| _]) ->
+ensure_host_header_with_port(["Host: " ++ Host| _]) ->
     case string:tokens(Host, [$:]) of
 	[_ActualHost, _Port] ->
 	    true;
@@ -1481,7 +1481,7 @@ ensure_host_header_with_port([_|T]) ->
 
 auth_header([]) ->
     auth_header_not_found;
-auth_header(["authorization:" ++ Value | _]) ->
+auth_header(["Authorization:" ++ Value | _]) ->
     {ok, string:strip(Value)};
 auth_header([_ | Tail]) ->
     auth_header(Tail).
@@ -1498,7 +1498,7 @@ handle_auth("Basic " ++ UserInfo, Challange, DefaultResponse) ->
 
 check_cookie([]) ->
     ct:fail(no_cookie_header);
-check_cookie(["cookie:" ++ _Value | _]) ->
+check_cookie(["Cookie:" ++ _Value | _]) ->
     ok;
 check_cookie([_Head | Tail]) ->
    check_cookie(Tail).
@@ -1616,6 +1616,11 @@ handle_uri(_,"/307.html",Port,_,Socket,_) ->
 	"Location:" ++ NewUri ++  "\r\n" ++
 	"Content-Length:" ++ integer_to_list(length(Body))
 	++ "\r\n\r\n" ++ Body;
+
+handle_uri(_,"/404.html",_,_,_,_) ->
+    "HTTP/1.1 404 not found\r\n" ++
+	"Content-Length:14\r\n\r\n" ++
+	"Page not found";
 
 handle_uri(_,"/500.html",_,_,_,_) ->
     "HTTP/1.1 500 Internal Server Error\r\n" ++
@@ -1743,6 +1748,15 @@ handle_uri(_,"/once_chunked.html",_,_,Socket,_) ->
     send(Socket, http_chunk:encode("<HTML><BODY>fo")),
     send(Socket,
 	 http_chunk:encode("obar</BODY></HTML>")),
+    http_chunk:encode_last();
+
+handle_uri(_,"/404_chunked.html",_,_,Socket,_) ->
+    Head =  "HTTP/1.1 404 not found\r\n" ++
+	"Transfer-Encoding:Chunked\r\n\r\n",
+    send(Socket, Head),
+    send(Socket, http_chunk:encode("<HTML><BODY>Not ")),
+    send(Socket,
+	 http_chunk:encode("found</BODY></HTML>")),
     http_chunk:encode_last();
 
 handle_uri(_,"/single_chunk.html",_,_,Socket,_) ->
