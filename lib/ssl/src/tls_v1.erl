@@ -425,7 +425,9 @@ enum_to_oid(21) -> ?secp224r1;
 enum_to_oid(22) -> ?secp256k1;
 enum_to_oid(23) -> ?secp256r1;
 enum_to_oid(24) -> ?secp384r1;
-enum_to_oid(25) -> ?secp521r1.
+enum_to_oid(25) -> ?secp521r1;
+enum_to_oid(_) -> undefined.
+
 
 sufficent_ec_support() ->
     CryptoSupport = crypto:supports(),
