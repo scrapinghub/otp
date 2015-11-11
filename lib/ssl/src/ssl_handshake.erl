@@ -1654,7 +1654,11 @@ dec_hello_extensions(<<?UINT16(?SIGNATURE_ALGORITHMS_EXT), ?UINT16(Len),
 dec_hello_extensions(<<?UINT16(?ELLIPTIC_CURVES_EXT), ?UINT16(Len),
 		       ExtData:Len/binary, Rest/binary>>, Acc) ->
     <<?UINT16(_), EllipticCurveList/binary>> = ExtData,
-    EllipticCurves = [tls_v1:enum_to_oid(X) || <<X:16>> <= EllipticCurveList],
+    EllipticCurves = [
+        OID || <<X:16>> <= EllipticCurveList,
+               OID <- [tls_v1:enum_to_oid(X)],
+               OID /= undefined
+    ],
     dec_hello_extensions(Rest, Acc#hello_extensions{elliptic_curves =
 							#elliptic_curves{elliptic_curve_list =
 									     EllipticCurves}});
