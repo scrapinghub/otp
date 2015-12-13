@@ -1778,7 +1778,7 @@ tls_tunnel(Address, Request, #state{session = #session{socket = Socket,
 	   ErrorHandler(Request, State, Reason)
     end.
 
-tls_tunnel_request(#request{headers = Headers, 
+tls_tunnel_request(#request{headers = Headers, id=Id,
 			     settings = Options,
 			     address =  {Host, Port}= Adress,
 			     ipv6_host_with_brackets = IPV6}) ->
@@ -1786,7 +1786,7 @@ tls_tunnel_request(#request{headers = Headers,
     URI = Host ++":" ++ integer_to_list(Port),
     
     #request{
-       id =  make_ref(),
+       id = Id,
        from = self(),
        scheme = http, %% Use tcp-first and then upgrade!
        address = Adress,
