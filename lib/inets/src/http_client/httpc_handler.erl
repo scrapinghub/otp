@@ -773,8 +773,8 @@ maybe_send_answer(#request{from = answer_sent}, _Reason, State) ->
 maybe_send_answer(Request, Answer, State) ->
     answer_request(Request, Answer, State).
 
-deliver_answer(#request{id = Id, from = From} = Request) 
-  when is_pid(From) ->
+deliver_answer(#request{id = Id, from = From} = Request)
+  when is_pid(From); is_function(From); is_tuple(From) andalso size(From) == 3 ->
     Response = httpc_response:error(Request, socket_closed_remotely),
     ?hcrd("deliver answer", [{id, Id}, {from, From}, {response, Response}]),
     httpc_response:send(From, Response);
