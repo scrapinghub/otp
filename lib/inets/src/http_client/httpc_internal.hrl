@@ -89,6 +89,12 @@
 	}
        ).
 
+
+-record(request_hooks, {
+    pre_send :: undefined | fun((term()) -> any())
+}).
+
+
 %%% All data associated to a specific HTTP request
 -record(request,
 	{
@@ -113,9 +119,10 @@
 			 % request
 	  timer,         % undefined | ref()
 	  socket_opts,   % undefined | [socket_option()]
-	  ipv6_host_with_brackets % boolean()
+	  ipv6_host_with_brackets, % boolean()
+      hooks = #request_hooks{}
 	}
-       ).               
+).
 
 
 -record(session,

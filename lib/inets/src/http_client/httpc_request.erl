@@ -54,16 +54,20 @@ send(SendAddr, #session{socket = Socket, socket_type = SocketType}, Request) ->
     send(SendAddr, Socket, SocketType, Request).
     
 send(SendAddr, Socket, SocketType, 
-     #request{method        = Method, 
-	      path          = Path, 
-	      pquery        = Query, 
-	      headers       = Headers,
-	      content       = Content, 
-	      address       = Address, 
-	      abs_uri       = AbsUri, 
-	      headers_as_is = HeadersAsIs,
-	      settings      = HttpOptions, 
-	      userinfo      = UserInfo}) -> 
+     #request{
+        id            = Id,
+        method        = Method, 
+        path          = Path, 
+        pquery        = Query, 
+        headers       = Headers,
+        content       = Content, 
+        address       = Address, 
+        abs_uri       = AbsUri, 
+        headers_as_is = HeadersAsIs,
+        settings      = HttpOptions, 
+        userinfo      = UserInfo,
+        hooks         = Hooks
+    }) -> 
     
     ?hcrt("send", 
 	  [{send_addr,     SendAddr}, 
@@ -100,7 +104,11 @@ send(SendAddr, Socket, SocketType,
 		http_request:http_headers(NewHeaders)
 	end,
     Version = HttpOptions#http_options.version,
-
+    % invoking pre_send hook
+    case Hooks of
+        #request_hooks{pre_send=Hook} when is_function(Hook) -> Hook(Id);
+        _ -> ok
+    end,
     do_send_body(SocketType, Socket, Method, Uri, Version, FinalHeaders, Body).
 
 
