@@ -546,28 +546,31 @@ handle_request(Method, Url,
 	    HeadersRecord = header_record(NewHeaders, Host2, HTTPOptions),
 	    Receiver      = proplists:get_value(receiver, Options),
 	    SocketOpts    = proplists:get_value(socket_opts, Options),
-	    BracketedHost = proplists:get_value(ipv6_host_with_brackets, 
-						Options),
+	    BracketedHost = proplists:get_value(ipv6_host_with_brackets, Options),
+        RequestHooks  = proplists:get_value(request_hooks, Options),
 	    MaybeEscPath  = maybe_encode_uri(HTTPOptions, Path),
 	    MaybeEscQuery = maybe_encode_uri(HTTPOptions, Query),
 	    AbsUri        = maybe_encode_uri(HTTPOptions, Url),
 
-	    Request = #request{from          = Receiver,
-			       scheme        = Scheme, 
-			       address       = {Host, Port},
-			       path          = MaybeEscPath,
-			       pquery        = MaybeEscQuery,
-			       method        = Method,
-			       headers       = HeadersRecord, 
-			       content       = {ContentType, Body},
-			       settings      = HTTPOptions, 
-			       abs_uri       = AbsUri,
-			       userinfo      = UserInfo, 
-			       stream        = Stream, 
-			       headers_as_is = headers_as_is(Headers0, Options),
-			       socket_opts   = SocketOpts, 
-			       started       = Started,
-			       ipv6_host_with_brackets = BracketedHost},
+	    Request = #request{
+            from          = Receiver,
+            scheme        = Scheme, 
+            address       = {Host, Port},
+            path          = MaybeEscPath,
+            pquery        = MaybeEscQuery,
+            method        = Method,
+            headers       = HeadersRecord, 
+            content       = {ContentType, Body},
+            settings      = HTTPOptions, 
+            abs_uri       = AbsUri,
+            userinfo      = UserInfo, 
+            stream        = Stream, 
+            headers_as_is = headers_as_is(Headers0, Options),
+            socket_opts   = SocketOpts, 
+            started       = Started,
+            ipv6_host_with_brackets = BracketedHost,
+            hooks = RequestHooks
+        },
 
 	    case httpc_manager:request(Request, profile_name(Profile)) of
 		{ok, RequestId} ->
@@ -776,65 +779,65 @@ request_options_defaults() ->
 
     VerifySync = VerifyBoolean,
 
-    VerifyStream = 
-	fun(none = _Value) -> 
-		ok;
-	   (self = _Value) -> 
-		ok;
-	   ({self, once} = _Value) -> 
-		ok;
-	   (Value) when is_list(Value) -> 
-		ok;
-	   (_) -> 
-		error
+    VerifyStream = fun
+        (none = _Value) -> ok;
+        (self = _Value) -> ok;
+        ({self, once} = _Value) -> ok;
+        (Value) when is_list(Value) -> ok;
+        (_) -> error
 	end,
 
-    VerifyBodyFormat = 
-	fun(string = _Value) ->
-		ok;
-	   (binary = _Value) ->
-		ok;
-	   (_) ->
-		error
+    VerifyBodyFormat = fun
+        (string = _Value) -> ok;
+        (binary = _Value) -> ok;
+        (_) -> error
 	end,
     
     VerifyFullResult = VerifyBoolean,
 
     VerifyHeaderAsIs = VerifyBoolean,
 
-    VerifyReceiver = 
-	fun(Value) when is_pid(Value) ->
-		ok;
-	   ({M, F, A}) when (is_atom(M) andalso 
-			     is_atom(F) andalso 
-			     is_list(A)) ->
-		ok;
-	   (Value) when is_function(Value, 1) ->
-		ok;
-	   (_) ->
-		error
+    VerifyReceiver = fun
+        (Value) when is_pid(Value) -> ok;
+        ({M, F, A}) when (is_atom(M) andalso is_atom(F) andalso is_list(A)) -> ok;
+        (Value) when is_function(Value, 1) -> ok;
+        (_) -> error
 	end,
 
-    VerifySocketOpts = 
-	fun([]) ->
-		{ok, undefined};
-	   (Value) when is_list(Value) ->
-		ok;
-	   (_) ->
-		error
+    VerifySocketOpts = fun
+        ([]) -> {ok, undefined};
+        (Value) when is_list(Value) -> ok;
+        (_) -> error
 	end,
 
     VerifyBrackets = VerifyBoolean, 
 
+    VerifyHooks = fun
+        (List) when is_list(List) -> 
+            FoldHooks = fun
+                (_, error) -> error;
+                ({HookName, HookFun}, Acc) when is_function(HookFun) ->
+                    {arity, Arity} = erlang:fun_info(HookFun, arity),
+                    case {HookName, Arity} of
+                        {pre_send, 1} -> Acc#request_hooks{pre_send=HookFun};
+                        {pre_send, _} -> error;
+                        _ -> Acc
+                    end;
+                (_, _Acc) -> error
+            end,
+            {ok, lists:foldl(FoldHooks, #request_hooks{}, List)};
+        (_) -> error
+    end,
     [
-     {sync,                    true,      VerifySync}, 
-     {stream,                  none,      VerifyStream},
-     {body_format,             string,    VerifyBodyFormat},
-     {full_result,             true,      VerifyFullResult},
-     {headers_as_is,           false,     VerifyHeaderAsIs},
-     {receiver,                self(),    VerifyReceiver},
-     {socket_opts,             undefined, VerifySocketOpts},
-     {ipv6_host_with_brackets, false,     VerifyBrackets}
+     {sync,                    true,             VerifySync}, 
+     {stream,                  none,             VerifyStream},
+     {body_format,             string,           VerifyBodyFormat},
+     {full_result,             true,             VerifyFullResult},
+     {headers_as_is,           false,            VerifyHeaderAsIs},
+     {receiver,                self(),           VerifyReceiver},
+     {socket_opts,             undefined,        VerifySocketOpts},
+     {ipv6_host_with_brackets, false,            VerifyBrackets},
+     {request_hooks,           #request_hooks{}, VerifyHooks}
     ]. 
 
 request_options(Options) ->
