@@ -1757,10 +1757,13 @@ send_raw(SocketType, Socket, ProcessBody, Acc) ->
             end
     end.
 
-tls_tunnel(Address, Request, #state{session = #session{socket = Socket, 
-						       socket_type = SocketType} = Session} = State, 
+tls_tunnel(Address, Request, #state{session = #session{socket = Socket,
+						       socket_type = SocketType} = Session} = State,
 	   ErrorHandler) ->
-    UpgradeRequest = tls_tunnel_request(Request), 
+    UpgradeRequest = tls_tunnel_request(Request),
+    %tls tunnel request and request have the same id
+    %no need to call pre_send hook second time
+    NewRequest = Request#request{hooks=undefined},
     case httpc_request:send(Address, Session, UpgradeRequest) of
 	ok -> 
 	    TmpState = State#state{request = UpgradeRequest,
@@ -1773,38 +1776,37 @@ tls_tunnel(Address, Request, #state{session = #session{socket = Socket,
 	    http_transport:setopts(SocketType,
 				   Socket, [{active, once}]),
 	    NewState = activate_request_timeout(TmpState),
-	    {ok, NewState#state{status = {ssl_tunnel, Request}}};
+	    {ok, NewState#state{status = {ssl_tunnel, NewRequest}}};
 	{error, Reason} ->
 	   ErrorHandler(Request, State, Reason)
     end.
 
 tls_tunnel_request(#request{headers = Headers, id=Id,
-			     settings = Options,
+			     settings = Options, hooks=Hooks,
 			     address =  {Host, Port}= Adress,
 			     ipv6_host_with_brackets = IPV6}) ->
-    
     URI = Host ++":" ++ integer_to_list(Port),
-    
     #request{
-       id = Id,
-       from = self(),
-       scheme = http, %% Use tcp-first and then upgrade!
-       address = Adress,
-       path = URI,
-       pquery  = "",
-       method = connect,
-       headers = #http_request_h{host = host_header(Headers, URI),
-				 te = "",
-				 pragma = "no-cache",
-				 other = [{"Proxy-Connection", " Keep-Alive"}]},
-       settings = Options,
-       abs_uri = URI,
-       stream = false,
-       userinfo = "",
-       headers_as_is = [],
-       started  = http_util:timestamp(),
-       ipv6_host_with_brackets = IPV6       
-      }.
+        id = Id,
+        from = self(),
+        scheme = http, %% Use tcp-first and then upgrade!
+        address = Adress,
+        path = URI,
+        pquery  = "",
+        method = connect,
+        headers = #http_request_h{host = host_header(Headers, URI),
+                    te = "",
+                    pragma = "no-cache",
+                    other = [{"Proxy-Connection", " Keep-Alive"}]},
+        settings = Options,
+        abs_uri = URI,
+        stream = false,
+        userinfo = "",
+        headers_as_is = [],
+        started  = http_util:timestamp(),
+        ipv6_host_with_brackets = IPV6,
+        hooks = Hooks
+    }.
 
 host_header(#http_request_h{host = Host}, _) ->
     Host;
