@@ -844,16 +844,16 @@ select_session(Candidates, Max) ->
 	    {ok, HandlerPid}
     end.
 
-pipeline_or_keep_alive(#request{id   = Id, 
-				from = From} = Request, 
-		       HandlerPid, 
-		       #state{handler_db = HandlerDb} = State) ->
+pipeline_or_keep_alive(#request{id = Id, from = From}=Request,
+                       HandlerPid, #state{handler_db = HandlerDb}=State) ->
     case (catch httpc_handler:send(Request, HandlerPid)) of
-	ok ->
-	    HandlerInfo = {Id, HandlerPid, From}, 
-	    ets:insert(HandlerDb, HandlerInfo);
-	_  -> % timeout pipelining failed
-	    start_handler(Request, State)
+        ok ->
+            HandlerInfo = {Id, HandlerPid, From},
+            ets:insert(HandlerDb, HandlerInfo);
+        _ ->
+            % timeout pipelining failed
+            httpc_handler:cancel(Id, HandlerPid),
+            start_handler(Request, State)
     end.
 
 is_inets_manager() ->
