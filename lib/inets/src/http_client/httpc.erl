@@ -552,6 +552,7 @@ handle_request(Method, Url,
 	    MaybeEscQuery = maybe_encode_uri(HTTPOptions, Query),
 	    AbsUri        = maybe_encode_uri(HTTPOptions, Url),
 
+
 	    Request = #request{
             from          = Receiver,
             scheme        = Scheme, 
@@ -726,6 +727,7 @@ http_options_default() ->
 			  error
 		  end,
     AutoRedirectPost =  boolfun(),
+    AutoRetryAfter   =  boolfun(),
 
     SslPost = fun(Value) when is_list(Value) ->
 		      {ok, {?HTTP_DEFAULT_SSL_KIND, Value}};
@@ -755,9 +757,10 @@ http_options_default() ->
 
     UrlDecodePost =  boolfun(),
     [
-     {version,         {value, "HTTP/1.1"},            #http_options.version,         VersionPost}, 
+     {version,         {value, "HTTP/1.1"},            #http_options.version,         VersionPost},
      {timeout,         {value, ?HTTP_REQUEST_TIMEOUT}, #http_options.timeout,         TimeoutPost},
      {autoredirect,    {value, true},                  #http_options.autoredirect,    AutoRedirectPost},
+     {auto_retry_after,{value, true},                  #http_options.auto_retry_after, AutoRetryAfter},
      {ssl,             {value, {?HTTP_DEFAULT_SSL_KIND, []}}, #http_options.ssl,             SslPost},
      {proxy_auth,      {value, undefined},             #http_options.proxy_auth,      ProxyAuthPost},
      {relaxed,         {value, false},                 #http_options.relaxed,         RelaxedPost},
