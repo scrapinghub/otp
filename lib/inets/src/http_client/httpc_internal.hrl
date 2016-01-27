@@ -49,7 +49,9 @@
 	  timeout = ?HTTP_REQUEST_TIMEOUT,  
 
 	  %% bool() - true if auto redirect on 30x response
-	  autoredirect = true, 
+	  autoredirect = true,
+
+      auto_retry_after = true,
 
 	  %% ssl socket options
 	  ssl = [], 
