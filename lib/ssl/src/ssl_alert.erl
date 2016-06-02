@@ -125,4 +125,6 @@ description_txt(?USER_CANCELED) ->
 description_txt(?NO_RENEGOTIATION) ->
     "no renegotiation";
 description_txt(?UNKNOWN_PSK_IDENTITY) ->
-    "unknown psk identity".
+    "unknown psk identity";
+description_txt(Enum) ->
+    lists:flatten(io_lib:format("unsupported/unknown alert: ~p", [Enum])).
