@@ -863,7 +863,15 @@ handle_alert(#alert{level = ?WARNING, description = ?USER_CANCELED} = Alert, Sta
 	     #state{ssl_options = SslOpts} = State0) ->
     log_alert(SslOpts#ssl_options.log_alert, StateName, Alert),
     {Record, State} = next_record(State0),
+    next_state(StateName, StateName, Record, State);
+
+%% Gracefully log and ignore all other warning alerts
+handle_alert(#alert{level = ?WARNING} = Alert, StateName,
+	     #state{ssl_options = SslOpts} = State0) ->
+    log_alert(SslOpts#ssl_options.log_alert, StateName, Alert),
+    {Record, State} = next_record(State0),
     next_state(StateName, StateName, Record, State).
+
 
 alert_user(Transport, Socket, connection, Opts, Pid, From, Alert, Role) ->
     alert_user(Transport,Socket, Opts#socket_options.active, Pid, From, Alert, Role);
