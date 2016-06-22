@@ -89,7 +89,6 @@
  	  authorization,
  	  expect, 
  	  from,
- 	  host,
  	  'if-match',
  	  'if-modified-since',
  	  'if-none-match',
@@ -112,7 +111,8 @@
  	  'content-type',
 	  expires,
  	  'last-modified',
-	  other=[]        % list() - Key/Value list with other headers
+	  other=[],       % list() - Key/Value list with other headers
+ 	  host
 	 }).
 
 -endif. % -ifdef(http_internal_hrl).
