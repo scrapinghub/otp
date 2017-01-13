@@ -539,21 +539,22 @@ handle_cast({request_done, RequestId}, State) ->
 
 handle_cast({set_options, Options}, State = #state{options = OldOptions}) ->
     ?hcrv("set options", [{options, Options}, {old_options, OldOptions}]),
-    NewOptions = 
-	#options{proxy                 = get_proxy(Options, OldOptions),
-		 https_proxy           = get_https_proxy(Options, OldOptions),
-		 pipeline_timeout      = get_pipeline_timeout(Options, OldOptions), 
-		 max_pipeline_length   = get_max_pipeline_length(Options, OldOptions), 
-		 max_keep_alive_length = get_max_keep_alive_length(Options, OldOptions), 
-		 keep_alive_timeout    = get_keep_alive_timeout(Options, OldOptions), 
-		 max_sessions          = get_max_sessions(Options, OldOptions), 
-		 cookies               = get_cookies(Options, OldOptions), 
-		 ipfamily              = get_ipfamily(Options, OldOptions), 
-		 ip                    = get_ip(Options, OldOptions),
-		 port                  = get_port(Options, OldOptions),
-		 verbose               = get_verbose(Options, OldOptions),
-		 socket_opts           = get_socket_opts(Options, OldOptions)
-		}, 
+    NewOptions = #options{
+        proxy                 = get_proxy(Options, OldOptions),
+        https_proxy           = get_https_proxy(Options, OldOptions),
+        proxy_chain           = get_proxy_chain(Options, OldOptions),
+        pipeline_timeout      = get_pipeline_timeout(Options, OldOptions), 
+        max_pipeline_length   = get_max_pipeline_length(Options, OldOptions), 
+        max_keep_alive_length = get_max_keep_alive_length(Options, OldOptions), 
+        keep_alive_timeout    = get_keep_alive_timeout(Options, OldOptions), 
+        max_sessions          = get_max_sessions(Options, OldOptions), 
+        cookies               = get_cookies(Options, OldOptions), 
+        ipfamily              = get_ipfamily(Options, OldOptions), 
+        ip                    = get_ip(Options, OldOptions),
+        port                  = get_port(Options, OldOptions),
+        verbose               = get_verbose(Options, OldOptions),
+        socket_opts           = get_socket_opts(Options, OldOptions)
+    }, 
     case {OldOptions#options.verbose, NewOptions#options.verbose} of
 	{Same, Same} ->
 	    ok;
@@ -969,6 +970,9 @@ get_proxy(Opts, #options{proxy = Default}) ->
 
 get_https_proxy(Opts, #options{https_proxy = Default}) ->
     proplists:get_value(https_proxy, Opts, Default).
+
+get_proxy_chain(Opts, #options{proxy_chain = Default}) ->
+    proplists:get_value(proxy_chain, Opts, Default).
 
 get_pipeline_timeout(Opts, #options{pipeline_timeout = Default}) ->
     proplists:get_value(pipeline_timeout, Opts, Default).

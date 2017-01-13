@@ -103,21 +103,20 @@ do_start_ssl() ->
 connect(SocketType, Address, Opts) ->
     connect(SocketType, Address, Opts, infinity).
 
-connect(ip_comm = _SocketType, {Host, Port}, Opts0, Timeout) 
-  when is_list(Opts0) ->
+connect(ip_comm = _SocketType, {Host, Port}, Opts0, Timeout) when is_list(Opts0) ->
     Opts = [binary, {packet, 0}, {active, false}, {reuseaddr, true} | Opts0],
     ?hlrt("connect using gen_tcp", 
-	  [{host, Host}, {port, Port}, {opts, Opts}, {timeout, Timeout}]),
+          [{host, Host}, {port, Port}, {opts, Opts}, {timeout, Timeout}]),
     try gen_tcp:connect(Host, Port, Opts, Timeout) of
-	{ok, _} = OK ->
-	    OK;
-	{error, _} = ERROR ->
-	    ERROR
+        {ok, _} = OK ->
+            OK;
+        {error, _} = ERROR ->
+            ERROR
     catch 
-	exit:{badarg, _} ->
-	    {error, {eoptions, Opts}};
-	exit:badarg ->
-	    {error, {eoptions, Opts}}
+        exit:{badarg, _} ->
+            {error, {eoptions, Opts}};
+        exit:badarg ->
+            {error, {eoptions, Opts}}
     end;
 
 %% Wrapper for backaward compatibillity
@@ -127,17 +126,17 @@ connect({ssl, SslConfig}, Address, Opts, Timeout) ->
 connect({essl, SslConfig}, {Host, Port}, Opts0, Timeout) -> 
     Opts = [binary, {active, false}, {ssl_imp, new} | Opts0] ++ SslConfig,
     ?hlrt("connect using essl", 
-	  [{host,       Host}, 
-	   {port,       Port}, 
-	   {ssl_config, SslConfig}, 
-	   {timeout,    Timeout}]),
+          [{host,       Host}, 
+           {port,       Port}, 
+           {ssl_config, SslConfig}, 
+           {timeout,    Timeout}]),
     case (catch ssl:connect(Host, Port, Opts, Timeout)) of
-	{'EXIT', Reason} ->
-	    {error, {eoptions, Reason}};
-	{ok, _} = OK ->
-	    OK;
-	{error, _} = ERROR ->
-	    ERROR
+        {'EXIT', Reason} ->
+            {error, {eoptions, Reason}};
+        {ok, _} = OK ->
+            OK;
+        {error, _} = ERROR ->
+            ERROR
     end.
 
 

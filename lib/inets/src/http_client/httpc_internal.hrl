@@ -76,6 +76,7 @@
 	{
 	 proxy = {undefined, []}, % {{ProxyHost, ProxyPort}, [NoProxy]},
 	 https_proxy = {undefined, []}, % {{ProxyHost, ProxyPort}, [NoProxy]}
+     proxy_chain = [], % {ProxyHost, ProxyPort, {ProxyUser, ProxyPassword} | undefined]}
 	 %% 0 means persistent connections are used without pipelining
 	 pipeline_timeout      = ?HTTP_PIPELINE_TIMEOUT, 
 	 max_pipeline_length   = ?HTTP_PIPELINE_LENGTH,

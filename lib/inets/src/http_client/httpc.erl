@@ -911,6 +911,9 @@ validate_options([{proxy, Proxy} = Opt| Tail], Acc) ->
     validate_proxy(Proxy),
     validate_options(Tail, [Opt | Acc]);
 
+validate_options([{proxy_chain, ProxyChain} | Tail], Acc) ->
+    validate_options(Tail, [{proxy_chain, ProxyChain}|Acc]);
+
 validate_options([{https_proxy, Proxy} = Opt| Tail], Acc) ->
     validate_https_proxy(Proxy),
     validate_options(Tail, [Opt | Acc]);
