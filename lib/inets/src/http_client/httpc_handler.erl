@@ -945,7 +945,6 @@ maybe_init_proxy_chain(Socket, [{Host, Port, Auth} | Rest]) ->
         undefined    -> [ConnectString, "\r\n"];
         {User, Pass} -> [ConnectString, AuthHeader(User, Pass), "\r\n"]
     end,
-    error_logger:info_msg("~s~n", [list_to_binary(Request)]),
     gen_tcp:send(Socket, Request),
     case recv_connect_response(Socket, []) of
         ok                 -> maybe_init_proxy_chain(Socket, Rest);
@@ -1825,8 +1824,6 @@ tls_tunnel(Address, Request, #state{session = #session{socket = Socket,
     %tls tunnel request and request have the same id
     %no need to call pre_send hook second time
     NewRequest = Request#request{hooks=undefined},
-    error_logger:info_msg("TLS tunnel via: ~p~n", [Address]),
-    error_logger:info_msg("Upgrade request: ~p~n", [UpgradeRequest]),
     case httpc_request:send(Address, Session, UpgradeRequest) of
         ok ->
             TmpState = State#state{request = UpgradeRequest,
