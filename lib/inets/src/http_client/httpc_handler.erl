@@ -939,7 +939,7 @@ maybe_init_proxy_chain(Socket, []) ->
 maybe_init_proxy_chain(Socket, [{Host, Port, Auth} | Rest]) ->
     ConnectString = io_lib:format("CONNECT ~s:~p HTTP/1.1\r\n", [Host, Port]),
     AuthHeader = fun({User, Password}) ->
-        ["Proxy-Authorization:", base64:encode(lists:flatten([User, ":", Password])), "\r\n"]
+        ["Proxy-Authorization: Basic ", base64:encode(lists:flatten([User, ":", Password])), "\r\n"]
     end,
     Request = case Auth of
         undefined    -> [ConnectString, "\r\n"];
