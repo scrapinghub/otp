@@ -855,14 +855,15 @@ code_change(_, State, _) ->
 %%% Internal functions
 %%%--------------------------------------------------------------------
 
-connect(SocketType, RawToAddress, Options, Timeout) ->
+connect(Request, SocketType, RawToAddress, Options, Timeout) ->
     #options{
        ipfamily    = IpFamily,
        ip          = FromAddress,
        port        = FromPort,
-       proxy_chain = ProxyChain,
        socket_opts = Opts0
     } = Options,
+    #request{
+      hooks = Hooks} = Request,
     Opts1 = case FromPort of
         default -> Opts0;
         _       -> [{port, FromPort} | Opts0]
@@ -871,6 +872,12 @@ connect(SocketType, RawToAddress, Options, Timeout) ->
         default -> Opts1;
         _       -> [{ip, FromAddress} | Opts1]
     end,
+
+    ProxyChain = case Hooks of
+        #request_hooks{pre_connect_init=Hook} when is_function(Hook) -> Hook();
+        _ -> undefined
+    end,
+
     {ToAddress, InitializedProxyChain} = init_proxy_chain_list(RawToAddress, ProxyChain),
     Result = case IpFamily of
         inet6fb4 ->
@@ -971,7 +978,7 @@ connect_and_send_first_request(Address, Request, #state{options = Options} = Sta
     ConnTimeout = (Request#request.settings)#http_options.connect_timeout,
     ?hcri("connect",
           [{address, Address}, {request, Request}, {options, Options}]),
-    case connect(SocketType, Address, Options, ConnTimeout) of
+    case connect(Request, SocketType, Address, Options, ConnTimeout) of
         {ok, Socket} ->
             ClientClose =
                         httpc_request:is_client_closing(
@@ -1017,7 +1024,7 @@ connect_and_send_first_request(Address, Request, #state{options = Options} = Sta
 connect_and_send_upgrade_request(Address, Request, #state{options = Options} = State) ->
     ConnTimeout = (Request#request.settings)#http_options.connect_timeout,
     SocketType = ip_comm,
-    case connect(SocketType, Address, Options, ConnTimeout) of
+    case connect(Request, SocketType, Address, Options, ConnTimeout) of
         {ok, Socket} ->
             SessionType = httpc_manager:session_type(Options),
             Session = #session{socket = Socket,
@@ -1104,7 +1111,7 @@ handler_info(#state{request     = Request,
 	 {queue_length, QueueLen},
 	 {scheme,       Scheme},
 	 {socket_info,  SocketInfo}],
-		
+
     [{status,          Status},
      {current_request, RequestInfo},
      {session,         SessionInfo}].
@@ -1349,7 +1356,7 @@ handle_pipeline(#state{status       = pipeline,
 	{{value, NextRequest}, Pipeline} ->
 	    ?hcrd("pipeline queue non-empty", []),
 	    case lists:member(NextRequest#request.id,
-			      State#state.canceled) of		
+			      State#state.canceled) of
 		true ->
 		    ?hcrv("next request had been cancelled", []),
 		    %% See comment for handle_cast({cancel, RequestId})
@@ -1387,7 +1394,7 @@ handle_keep_alive_queue(#state{status       = keep_alive,
 	{{value, NextRequest}, KeepAlive} ->
 	    ?hcrd("keep_alive queue non-empty", []),
 	    case lists:member(NextRequest#request.id,
-			      State#state.canceled) of		
+			      State#state.canceled) of
 		true ->
 		    ?hcrv("next request has already been canceled", []),
 		    handle_keep_alive_queue(

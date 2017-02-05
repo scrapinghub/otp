@@ -43,10 +43,10 @@
 -record(http_options,
 	{
 	  %% string() - "HTTP/1.1" | "HTTP/1.0" | "HTTP/0.9"
-	  version, 
+	  version,
 
 	  %% integer() | infinity - ms before a request times out
-	  timeout = ?HTTP_REQUEST_TIMEOUT,  
+	  timeout = ?HTTP_REQUEST_TIMEOUT,
 
 	  %% bool() - true if auto redirect on 30x response
 	  autoredirect = true,
@@ -54,13 +54,13 @@
       auto_retry_after = true,
 
 	  %% ssl socket options
-	  ssl = [], 
+	  ssl = [],
 
-	  %% {User, Password} = {string(), string()} 
-	  proxy_auth, 
+	  %% {User, Password} = {string(), string()}
+	  proxy_auth,
 
 	  %% bool() - true if not strictly std compliant
-	  relaxed = false, 
+	  relaxed = false,
 
 	  %% integer() - ms before a connect times out
 	  connect_timeout = ?HTTP_REQUEST_CTIMEOUT,
@@ -71,14 +71,14 @@
 	 }
        ).
 
-%%% HTTP Client per profile setting. 
--record(options, 
+%%% HTTP Client per profile setting.
+-record(options,
 	{
 	 proxy = {undefined, []}, % {{ProxyHost, ProxyPort}, [NoProxy]},
 	 https_proxy = {undefined, []}, % {{ProxyHost, ProxyPort}, [NoProxy]}
      proxy_chain = [], % {ProxyHost, ProxyPort, {ProxyUser, ProxyPassword} | undefined]}
 	 %% 0 means persistent connections are used without pipelining
-	 pipeline_timeout      = ?HTTP_PIPELINE_TIMEOUT, 
+	 pipeline_timeout      = ?HTTP_PIPELINE_TIMEOUT,
 	 max_pipeline_length   = ?HTTP_PIPELINE_LENGTH,
 	 max_keep_alive_length = ?HTTP_KEEP_ALIVE_LENGTH,
 	 keep_alive_timeout    = ?HTTP_KEEP_ALIVE_TIMEOUT, % Used when pipeline_timeout = 0
@@ -94,7 +94,8 @@
 
 
 -record(request_hooks, {
-    pre_send :: undefined | fun((term()) -> any())
+    pre_send         :: undefined | fun((term()) -> any()),
+    pre_connect_init :: undefined | fun((term()) -> any())
 }).
 
 
@@ -104,7 +105,7 @@
 	  id,            % ref() - Request Id
 	  from,          % pid() - Caller
 	  redircount = 0,% Number of redirects made for this request
-	  scheme,        % http | https 
+	  scheme,        % http | https
 	  address,       % ({Host,Port}) Destination Host and Port
 	  path,          % string() - Path of parsed URL
 	  pquery,        % string() - Rest of parsed URL
@@ -116,9 +117,9 @@
 	  userinfo,      % string() - optinal "<userinfo>@<host>:<port>"
 	  stream,	 % boolean() - stream async reply?
 	  headers_as_is, % boolean() - workaround for servers that does
-			 % not honor the http standard, can also be used 
+			 % not honor the http standard, can also be used
 			 % for testing purposes.
-	  started,       % integer() > 0 - When we started processing the 
+	  started,       % integer() > 0 - When we started processing the
 			 % request
 	  timer,         % undefined | ref()
 	  socket_opts,   % undefined | [socket_option()]
@@ -131,28 +132,28 @@
 -record(session,
 	{
 	  %% {{Host, Port}, HandlerPid}
-	  id, 
+	  id,
 
 	  %% true | false
-	  client_close, 
+	  client_close,
 
 	  %% http (HTTP/TCP) | https (HTTP/SSL/TCP)
-	  scheme, 
+	  scheme,
 
 	  %% Open socket, used by connection
-	  socket, 
-	  
+	  socket,
+
 	  %% socket-type, used by connection
 	  socket_type,
 
-	  %% Current length of pipeline or keep-alive queue  
-	  queue_length = 1, 
+	  %% Current length of pipeline or keep-alive queue
+	  queue_length = 1,
 
-	  %% pipeline | keep_alive (wait for response before sending new request) 
-	  type, 
+	  %% pipeline | keep_alive (wait for response before sending new request)
+	  type,
 
 	  %% true | false
-	  %% This will be true, when a response has been received for 
+	  %% This will be true, when a response has been received for
 	  %% the first request. See type above.
 	  available = false
 	 }).
@@ -166,14 +167,14 @@
 	  value,
 	  comment,
 	  max_age = session,
-	  path, 
+	  path,
 	  path_default = false,
 	  secure = false,
-	  version = "0" 
+	  version = "0"
 	 }).
 
 
-%% -record(parsed_uri, 
+%% -record(parsed_uri,
 %% 	{
 %% 	  scheme, % http | https
 %% 	  uinfo,  % string()
