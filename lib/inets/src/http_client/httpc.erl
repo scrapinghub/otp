@@ -822,9 +822,9 @@ request_options_defaults() ->
                 ({HookName, HookFun}, Acc) when is_function(HookFun) ->
                     {arity, Arity} = erlang:fun_info(HookFun, arity),
                     case {HookName, Arity} of
-                        {pre_send, 1} -> Acc#request_hooks{pre_send=HookFun};
-                        {pre_send, _} -> error;
-                        _ -> Acc
+                        {pre_send, 1}    -> Acc#request_hooks{pre_send=HookFun};
+                        {handler_pid, 2} -> Acc#request_hooks{handler_pid=HookFun};
+                        _ -> error
                     end;
                 (_, _Acc) -> error
             end,
