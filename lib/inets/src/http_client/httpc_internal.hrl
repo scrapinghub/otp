@@ -93,7 +93,8 @@
 
 
 -record(request_hooks, {
-    pre_send :: undefined | fun((term()) -> any())
+    pre_send    :: undefined | fun((reference()) -> any()),
+    handler_pid :: undefined | fun((reference(), pid()) -> any())
 }).
 
 

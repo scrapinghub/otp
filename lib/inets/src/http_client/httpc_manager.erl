@@ -773,19 +773,18 @@ handle_request(Request, State = #state{options = Options}) ->
     {reply, {ok, NewRequest#request.id}, State}.
 
 
-start_handler(#request{id   = Id, 
-		       from = From} = Request, 
-	      #state{profile_name = ProfileName, 
-		     handler_db   = HandlerDb, 
-		     options      = Options}) ->
-    {ok, Pid} =
-	case is_inets_manager() of
-	    true ->
-		httpc_handler_sup:start_child([whereis(httpc_handler_sup),
-					       Request, Options, ProfileName]);
-	    false ->
-		httpc_handler:start_link(self(), Request, Options, ProfileName)
-	end,
+start_handler(#request{id = Id, hooks = Hooks, from = From} = Request,
+              #state{profile_name = ProfileName, handler_db = HandlerDb, options = Options}) ->
+    {ok, Pid} = case is_inets_manager() of
+        true ->
+            httpc_handler_sup:start_child([whereis(httpc_handler_sup), Request, Options, ProfileName]);
+        false ->
+            httpc_handler:start_link(self(), Request, Options, ProfileName)
+    end,
+    case Hooks#request_hooks.handler_pid of
+        undefined -> ok;
+        Hook      -> Hook(Id, Pid)
+    end,
     HandlerInfo = {Id, Pid, From}, 
     ets:insert(HandlerDb, HandlerInfo), 
     erlang:monitor(process, Pid).
@@ -844,11 +843,15 @@ select_session(Candidates, Max) ->
 	    {ok, HandlerPid}
     end.
 
-pipeline_or_keep_alive(#request{id = Id, from = From}=Request,
+pipeline_or_keep_alive(#request{id = Id, from = From, hooks = Hooks}=Request,
                        HandlerPid, #state{handler_db = HandlerDb}=State) ->
     case (catch httpc_handler:send(Request, HandlerPid)) of
         ok ->
             HandlerInfo = {Id, HandlerPid, From},
+            case Hooks#request_hooks.handler_pid of
+                undefined -> ok;
+                Hook      -> Hook(Id, HandlerPid)
+            end,
             ets:insert(HandlerDb, HandlerInfo);
         _ ->
             % timeout pipelining failed
